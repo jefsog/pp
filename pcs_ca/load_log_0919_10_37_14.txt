@@ -1,0 +1,3 @@
+file name: C:\Users\jesong\pp\file_to_load\California_Sample_PCS.csv
+table name: pcs_ca_California_Sample_PCS
+create table pcs_ca_California_Sample_PCS (NPDES_ID varchar(9),Facility_Name varchar(30),Address varchar(30),City varchar(23),State varchar(10),ZIP_Code varchar(9),County varchar(15),Latitude varchar(11),Longitude varchar(11),Permit_Issued_Date varchar(11),Permit_Expired_Date varchar(11),SIC_Code varchar(11),SIC_Code_Description varchar(4),USGS_HUC_Code varchar(1),Water_Discharge_Report_Link varchar(79), varchar(79))Seconds taken: 4.16500020027

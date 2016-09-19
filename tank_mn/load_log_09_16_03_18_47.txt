@@ -1,0 +1,19 @@
+table name: tank_mn_insrem_action
+rows inserted: 37584
+Seconds taken: 2114.05900002table name: tank_mn_property_transfer_mas
+rows inserted: 1833
+Seconds taken: 104.447000027table name: tank_mn_tabsite
+rows inserted: 27247
+Seconds taken: 1592.57800007table name: tank_mn_tales_address
+rows inserted: 149706
+Seconds taken: 8282.46499991table name: tank_mn_tales_lat_long
+rows inserted: 91968
+Seconds taken: 5061.14100003table name: tank_mn_tales_program_interest
+rows inserted: 156225
+Seconds taken: 8600.61000013table name: tank_mn_tank_action
+rows inserted: 192718
+Seconds taken: 10982.089table name: tank_mn_tank_compartment
+rows inserted: 104480
+Seconds taken: 5769.77900004table name: tank_mn_tmtb_insrem_action
+rows inserted: 22
+Seconds taken: 3.59100008011

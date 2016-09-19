@@ -1,0 +1,4 @@
+file name: C:\Users\jesong\pp\file_to_load\ICIS_FACILITIES.csv
+table name: jeff_ICIS_FACILITIES
+rows inserted: 380170
+Seconds taken: 21489.507
