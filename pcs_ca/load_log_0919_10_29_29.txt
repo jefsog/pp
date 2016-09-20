@@ -1,3 +1,0 @@
-file name: C:\Users\jesong\pp\file_to_load\California_Sample_PCS.csv
-table name: pcs_ca_California_Sample_PCS
-cannot concatenate 'str' and 'DatabaseError' objectsSeconds taken: 7.14199995995

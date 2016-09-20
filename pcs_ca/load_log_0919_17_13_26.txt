@@ -1,3 +1,0 @@
-file name: C:\Users\jesong\pp\pcs_ca\California_Sample_PCS.csv
-table name: jeff_California_Sample_PCS
-Seconds taken: 108.752000093
