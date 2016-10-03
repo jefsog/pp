@@ -1,4 +1,5 @@
 import re
+import codecs
 import os
 import csv
 import datetime
@@ -15,12 +16,19 @@ def read_directory(str_absolute_path):
             lst_absolute_path_name.append(os.path.join(str_absolute_path, name)) 
     return lst_absolute_path_name
 
-def write_log(absolute_path, str_to_write):
-    file_name = absolute_path + '\load_log_' + datetime.datetime.now().strftime("%m%d_%H_%M_%S") + '.txt'
+def write_log(file_name, str_to_write):
+    #file_name = absolute_path + '\load_log_' + datetime.datetime.now().strftime("%m%d_%H_%M_%S") + '.txt'
     
     file = open(file_name, 'w')
     file.write(str_to_write)
     file.close()
+
+def write_log_utf8(file_name, str_to_write):
+    file = codecs.open(file_name, encoding='utf-8', mode = 'wb')
+    ustr = str_to_write.decode('utf-8')
+    file.write(ustr)
+    file.close()
+
 
 class File(object):
     """read or write csv/txt file"""
@@ -90,7 +98,13 @@ class File(object):
         lst_underscore_added = []
         for content in lst_string:
             content = content.strip()
-            lst_underscore_added.append(content.replace(' ', '_'))
+            content = re.sub('[^A-z0-9_]', '_', content)
+            while content.find('__') > -1:
+                content = content.replace('__', '_')    
+        
+            if len(content) > 30:
+                content = content[0:30]
+            lst_underscore_added.append(content) 
         return lst_underscore_added
 
     # retrieve file name, prefix it with a string, trunk its length to no more than 30
@@ -98,16 +112,18 @@ class File(object):
         int_dot_position = str_absolute_file_name.find('.')
         table_name = str_prefix + '_' + str_absolute_file_name[len(str_directory)+1:int_dot_position]
         
-        while table_name.find('  ') > -1:
-            table_name = table_name.replace('  ', ' ')
-        if table_name.find(' ') > -1:
-            table_name = table_name.replace(' ', '_')
-        if table_name.find('-') > -1:
-            table_name = table_name.replace('-', '_')
+        # while table_name.find('  ') > -1:
+        #     table_name = table_name.replace('  ', ' ')
+        # if table_name.find(' ') > -1:
+        #     table_name = table_name.replace(' ', '_')
+        # if table_name.find('-') > -1:
+        #     table_name = table_name.replace('-', '_')
+        table_name = re.sub('[^A-z0-9_]', '_', table_name)
         while table_name.find('__') > -1:
             table_name = table_name.replace('__', '_')    
+        
         if len(table_name) > 30:
-            table_name = table_name[0:29]
+            table_name = table_name[0:30]
         return table_name
 
 
@@ -146,9 +162,35 @@ class CSV_file(File):
 
 # file size over 50MB
 # feed no more than 200k records for one batch
-class Big_CSV(CSV_file):
+class CSV_list(File):
     
-    pass
+    def __init__(self, line_list, str_delimiter = ','):        
+        self.str_delimiter = str_delimiter
+        self.line_list = line_list
+    
+    def read(self):
+        '''    
+        '\0' is null bytes in the input file    
+        '''
+        lst_lst_field = []
+        try:
+            reader = None
+            if self.str_delimiter == ',':
+                
+                reader = csv.reader(self.line_list)            
+                
+                
+            else:
+                
+                
+                reader = csv.reader(self.line_list,  delimiter=self.str_delimiter, quoting=csv.QUOTE_NONE)            
+            for row in reader:
+                
+                lst_lst_field.append(row)        
+        
+        except csv.Error as e:
+            print str_path_name + ':' + e
+        return lst_lst_field
 
 
 

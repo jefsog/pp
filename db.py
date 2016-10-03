@@ -51,6 +51,7 @@ class Database(object):
             print table_name
             print e
             print query
+            raise cx_Oracle.DatabaseError(table_name+"|"+query)
             
 
     def insert_one_row(self, table_name, lst_field):
@@ -65,7 +66,8 @@ class Database(object):
         query = query1 + query2 + query3
         #print query
         
-        cursor.execute(query)
+        self.cursor.execute(query)
+        self.cursor.execute('commit')
         
 
 
@@ -78,6 +80,8 @@ class Database(object):
             count = 0
             for i in range(int_start_row, len(lst_lst_field)):
                 row = lst_lst_field[i]
+                if len(row) == 0:  # empty record
+                    break
                 query2 = ''
                 for j in range(len(row)):
                     query2 = query2 + self.prepare_field(row[j]) 
