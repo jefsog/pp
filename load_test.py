@@ -71,6 +71,8 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
     lst_lst_field = []
     ins_csv_list = None
     
+    
+
     try:
     # determine the length of fields
         count = 0
@@ -87,11 +89,27 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
                 ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
                 lst_lst_field = ins_csv_list.read()                            
                 lst_line = []
+                
+                # Special treatment could use two characters to replace one
+                # The special character treatment was put here 
+                # is to get the length of field after treament
+                ins_spch = spch.SPCH(lst_lst_field)
+                ins_spch.replace_spch()
+                lst_lst_field = ins_spch.lst_lst_field
+
                 lst_fields_length.append(ins_csv_list.get_fields_max_length(lst_lst_field))
             count += 1
-        ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
-        lst_lst_field = ins_csv_list.read()
-        lst_fields_length.append(ins_csv_list.get_fields_max_length(lst_lst_field))
+        if len(lst_line) > 0: # the last batch could be empty
+            ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
+            lst_lst_field = ins_csv_list.read()
+
+            #special character treatment
+            ins_spch = spch.SPCH(lst_lst_field)
+            ins_spch.replace_spch()
+            lst_lst_field = ins_spch.lst_lst_field
+
+            lst_fields_length.append(ins_csv_list.get_fields_max_length(lst_lst_field))
+
         lst_column_max_length = get_max_list(lst_fields_length)
         
 
@@ -141,24 +159,26 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
                     
                     str_sp_treatment += str(tup) + '\n'
                 
+                str_sp_treatment += str(count) + '\n'
                 int_rows_inserted += ins_db.insert_rows(table_name, lst_lst_field, 0)
                 
             count += 1
         f.close()
-        ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
-        lst_lst_field = ins_csv_list.read()
-        lst_line = []
-        
-        #special character treatment
-        ins_spch = spch.SPCH(lst_lst_field)
-        spch_treated_result = ins_spch.replace_spch()
-        lst_lst_field = ins_spch.lst_lst_field
-        
-        str_sp_treatment += str(spch_treated_result[0]) + '\n'
-        for tup in spch_treated_result[1]:
-            str_sp_treatment += str(tup) + '\n'
+        if len(lst_line) > 0:
+            ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
+            lst_lst_field = ins_csv_list.read()
+            lst_line = []
+            
+            #special character treatment
+            ins_spch = spch.SPCH(lst_lst_field)
+            spch_treated_result = ins_spch.replace_spch()
+            lst_lst_field = ins_spch.lst_lst_field
+            
+            str_sp_treatment += str(spch_treated_result[0]) + '\n'
+            for tup in spch_treated_result[1]:
+                str_sp_treatment += str(tup) + '\n'
 
-        int_rows_inserted += ins_db.insert_rows(table_name, lst_lst_field, 0)
+            int_rows_inserted += ins_db.insert_rows(table_name, lst_lst_field, 0)
         
 
         str_log = str_log + 'rows inserted: ' + str(int_rows_inserted) + '\n'
@@ -223,14 +243,26 @@ def main(str_absolute_path, str_prefix, str_delimiter = ','):
             try:
                 file_info = os.stat(file_name)
                 file_size = file_info.st_size
-                size_limit = 100*1024*1024
-                batch_size = 400*1000
+                # 100*1024*1024  100MB
+                size_limit = 100*1024
+                int_round_batch = 10
                 if file_size < size_limit:
                     # size < 100 MB
                     normal_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter) 
                 else:
 
                     # size >= 100 MB
+                    total_line = 0
+                    file = open(file_name, 'rb')
+                    for line in file:
+                        total_line += 1
+                    file.close()
+                    
+                    loading_times = file_size/size_limit + 1
+                    
+                    batch_size = total_line/loading_times
+                    batch_size = batch_size/int_round_batch*int_round_batch
+                    print batch_size
                     giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, int_record_starting, batch_size)
                    
                     

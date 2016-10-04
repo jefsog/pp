@@ -18,7 +18,8 @@ class SPCH(object):
                         ,'\xE2\x80\x90':'\x5f'
                         ,}
         self.lst_lst_field = lst_lst_field
-        #print self.dic_w1252
+
+        
 
 
 
@@ -41,7 +42,7 @@ class SPCH(object):
     # return the count of '[\x80-\xff]', utf-8, ratio and a position list of '[\x80-\xff]'
     def utf8_percent(self):
         compiled_pattern_all = re.compile('[\x80-\xff]') 
-        compiled_pattern_utf8 = re.compile('[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\xa0-\xbf][\x80-\xbf]|[\xf0-\xff][\x90-\xbf][\x80-\xbf]{2}')
+        compiled_pattern_utf8 = re.compile('[\xc0-\xff][\x80-\xbf]{1,3}')
         ratio = 0
         count_all = 0
         count_utf8 = 0
@@ -49,7 +50,9 @@ class SPCH(object):
         for i in range(len(self.lst_lst_field)):
             for j in range(len(self.lst_lst_field[i])):
                 int_all = len(self.lst_spchar(compiled_pattern_all, self.lst_lst_field[i][j]))
+                
                 int_utf8 = len(self.lst_spchar(compiled_pattern_utf8, self.lst_lst_field[i][j]))
+                
                 count_all = count_all + int_all
                 count_utf8 = count_utf8 + int_utf8
                 if int_all>0:
@@ -57,7 +60,7 @@ class SPCH(object):
                     lst_spchar_position.append(tup)
         if count_all != 0:
             ratio = count_utf8/float(count_all)
-        return ( ratio , count_utf8,count_all, lst_spchar_position)
+        return ( ratio , count_utf8, count_all, lst_spchar_position)
 
 
     def change_encoding(self, lst_spchar_position, compiled_pattern, dic_encoding):
@@ -66,6 +69,7 @@ class SPCH(object):
         for position in lst_spchar_position:
             
             lst_matched = self.lst_spchar(compiled_pattern, self.lst_lst_field[position[0]][position[1]])
+            #print self.lst_lst_field[position[0]][position[1]]
             
             if lst_matched: # not an empty list
                 for hex_value in lst_matched:
@@ -81,12 +85,22 @@ class SPCH(object):
                         ending_position = field_length
                     str_segment = str_field[start_position:ending_position]
                     
+                    
 
-                    if hex_value in dic_encoding:
-                        self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, dic_encoding[hex_value])
-                        tup_result = (position[0], position[1], hex_value, dic_encoding[hex_value], str_segment)
-                    else:
-                        tup_result = (position[0], position[1], hex_value, None, str_segment)
+
+                    # if hex_value in dic_encoding:
+                    #     self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, dic_encoding[hex_value])
+                    #     tup_result = (position[0], position[1], hex_value, dic_encoding[hex_value], str_segment)
+                    # else:
+                                               
+                    #     tup_result = (position[0], position[1], hex_value, None, str_segment)
+                    
+                    # to be safe, the above character replacing code was commented out
+                    # if using the character replacing code again, comment the following line out
+                    self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, str([hex_value])) # make hex value unchanged in oracle
+                    tup_result = (position[0], position[1], hex_value, None, str_segment)
+
+
                     lst_replace_result.append(tup_result)
         return lst_replace_result                  
     
@@ -96,7 +110,7 @@ class SPCH(object):
         lst_replace_result = []
         tup_detect_result = self.utf8_percent()
         compiled_pattern_w1252 = re.compile('[\x80-\x9f]') 
-        compiled_pattern_utf8 = re.compile('[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\xa0-\xbf][\x80-\xbf]|[\xf0-\xff][\x90-\xbf][\x80-\xbf]{2}')
+        compiled_pattern_utf8 = re.compile('[\xc0-\xff][\x80-\xbf]{1,3}')
       
         if tup_detect_result[2] > 0:
             if tup_detect_result[0] > 0.2:
@@ -110,9 +124,11 @@ class SPCH(object):
 if __name__ == '__main__':
     
     #lst_line = read_file(sys.argv[1]) # accept a path pointing to a text file
-    lst_line = fl.CSV_file('C:\Users\jesong\pp\CFOT_ON_GEO.txt', '|' ).read()
+    lst_line = fl.CSV_file(r'C:\Users\jesong\csv\HMIR2014MAR16_part.txt').read()
+    #for line in lst_line:
+        #print lst_line
     ins_sp = SPCH(lst_line)
-    result = ins_sp.replace_spch()
+    print ins_sp.utf8_percent()
     #print result
 
 

@@ -110,9 +110,9 @@ class Database(object):
                 string_returned = "'" + self.escape_single_quotation(str_string) + "'"
         else:
             if str_string.find("'") == -1:
-                string_returned = prepare_clob_field(str_string)
+                string_returned = self.prepare_clob_field(str_string)
             else:
-                string_returned = prepare_clob_field(self.escape_single_quotation(str_string))
+                string_returned = self.prepare_clob_field(self.escape_single_quotation(str_string))
         return string_returned
 
     # if a field contains a single quotation mark, escapte it with another single quotation mark

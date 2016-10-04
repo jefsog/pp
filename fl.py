@@ -157,7 +157,7 @@ class CSV_file(File):
                         lst_lst_field.append(row)        
         
         except csv.Error as e:
-            print str_path_name + ':' + e
+            raise e
         return lst_lst_field
 
 # file size over 50MB
@@ -189,7 +189,7 @@ class CSV_list(File):
                 lst_lst_field.append(row)        
         
         except csv.Error as e:
-            print str_path_name + ':' + e
+            raise e
         return lst_lst_field
 
 
