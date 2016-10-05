@@ -59,9 +59,9 @@ class File(object):
         return lst_line
 
     #return a list of max length of each column in the parsed file
-    def get_fields_max_length(self, lst_lst_file): 
+    def get_fields_max_length(self, lst_lst_file, int_starting_position): 
         lst_field_max_length = []
-        for j in range(1, len(lst_lst_file)): #skip the file head, start from the second line
+        for j in range(int_starting_position, len(lst_lst_file)): #skip the file head, start from the second line
             line = lst_lst_file[j]
             i = 0
             for field in line:
@@ -110,8 +110,11 @@ class File(object):
     # retrieve file name, prefix it with a string, trunk its length to no more than 30
     def get_table_name(self, str_absolute_file_name, str_directory, str_prefix):
         int_dot_position = str_absolute_file_name.find('.')
-        table_name = str_prefix + '_' + str_absolute_file_name[len(str_directory)+1:int_dot_position]
         
+        if  not len(str_prefix):
+            table_name = str_prefix + '_' + str_absolute_file_name[len(str_directory)+1:int_dot_position]
+        else:
+            table_name = str_absolute_file_name[len(str_directory)+1:int_dot_position]
         # while table_name.find('  ') > -1:
         #     table_name = table_name.replace('  ', ' ')
         # if table_name.find(' ') > -1:

@@ -61,7 +61,21 @@ class SPCH(object):
         if count_all != 0:
             ratio = count_utf8/float(count_all)
         return ( ratio , count_utf8, count_all, lst_spchar_position)
+    
+    def shm_detector(self):
+        str_encoding_type = 'ASCII'
+        error_info = None
+        lst_spchar_position = self.utf8_percent()[3]
+        if len(lst_spchar_position) > 0:
+            for position in lst_spchar_position:
+                try:
+                    self.lst_lst_field[position[0]][position[1]].decode('utf-8')
+                    str_encoding_type = 'utf-8'
+                except UnicodeDecodeError as e:
+                    error_info = e
+                    str_encoding_type = 'windows-1252'
 
+        return (str_encoding_type, error_info)
 
     def change_encoding(self, lst_spchar_position, compiled_pattern, dic_encoding):
         lst_replace_result = []
