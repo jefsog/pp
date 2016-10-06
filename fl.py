@@ -111,7 +111,7 @@ class File(object):
     def get_table_name(self, str_absolute_file_name, str_directory, str_prefix):
         int_dot_position = str_absolute_file_name.find('.')
         
-        if  not len(str_prefix):
+        if  len(str_prefix) > 0:
             table_name = str_prefix + '_' + str_absolute_file_name[len(str_directory)+1:int_dot_position]
         else:
             table_name = str_absolute_file_name[len(str_directory)+1:int_dot_position]

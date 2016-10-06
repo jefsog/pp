@@ -42,7 +42,8 @@ class SPCH(object):
     # return the count of '[\x80-\xff]', utf-8, ratio and a position list of '[\x80-\xff]'
     def utf8_percent(self):
         compiled_pattern_all = re.compile('[\x80-\xff]') 
-        compiled_pattern_utf8 = re.compile('[\xc0-\xff][\x80-\xbf]{1,3}')
+        compiled_pattern_utf8 = re.compile('[\xc2-\xf4][\x80-\xbf]{1,3}')
+        
         ratio = 0
         count_all = 0
         count_utf8 = 0
@@ -112,6 +113,7 @@ class SPCH(object):
                     # to be safe, the above character replacing code was commented out
                     # if using the character replacing code again, comment the following line out
                     self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, str([hex_value])) # make hex value unchanged in oracle
+                    #self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].decode('utf-8')
                     tup_result = (position[0], position[1], hex_value, None, str_segment)
 
 
@@ -124,10 +126,10 @@ class SPCH(object):
         lst_replace_result = []
         tup_detect_result = self.utf8_percent()
         compiled_pattern_w1252 = re.compile('[\x80-\x9f]') 
-        compiled_pattern_utf8 = re.compile('[\xc0-\xff][\x80-\xbf]{1,3}')
+        compiled_pattern_utf8 = re.compile('[\xc2-\xf4][\x80-\xbf]{1,3}')
       
         if tup_detect_result[2] > 0:
-            if tup_detect_result[0] > 0.2:
+            if tup_detect_result[0] > 0.25:
                 # utf-8
                 lst_replace_result = self.change_encoding(tup_detect_result[3], compiled_pattern_utf8, self.dic_utf8)
             else:

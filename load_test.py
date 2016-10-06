@@ -149,6 +149,7 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
         
         # create table
         table_name = ins_csv_list.get_table_name(file_name, str_absolute_path, str_prefix)
+        
         if len(lst_column_name) == len(lst_column_max_length):
             lst_field_type = ins_csv_list.get_data_type(lst_column_max_length)
             lst_column_name = ins_csv_list.add_underscore(lst_column_name)
@@ -190,11 +191,7 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
                     str_sp_treatment += lst_column_name[tup[1]] + '\t' + str(tup) + '\n'
                 
                 str_sp_treatment += str(count) + '\n'
-                # n = 0
-                # for lst in lst_lst_field:
-                #     if n > 2: break
-                #     print lst
-                #     n += 1
+
                 int_rows_inserted += ins_db.insert_rows(table_name, lst_lst_field, 0)
                 
             count += 1
@@ -321,6 +318,7 @@ if __name__ == '__main__':
         main(sys.argv[1])
     elif len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
+
     elif len(sys.argv) == 4:        
         str_delimiter = sys.argv[3].decode('string_escape')  # make '\' working as an escape character
         main(sys.argv[1], sys.argv[2], str_delimiter)
