@@ -100,8 +100,37 @@ class SPCH(object):
                         ending_position = field_length
                     str_segment = str_field[start_position:ending_position]
                     
-                    
+                    tup_result = ()
 
+                    if dic_encoding == self.dic_utf8:
+                        try:
+                            str_replacement = hex_value.decode('utf-8').encode('cp1252')
+                            # mapping successfully, replacement exists
+                            if str_replacement in self.dic_w1252:
+                                str_replacement = self.dic_w1252[str_replacement]
+
+                            tup_result = (position[0], position[1], hex_value, str_replacement, str_segment)
+                            self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, str_replacement)
+                        # mapping fails
+                        except (UnicodeDecodeError,UnicodeEncodeError) as e:
+                            
+                            if hex_value == '\xef\xbb\xbf':
+                                self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, '')
+                                tup_result = (position[0], position[1], hex_value, '', str_segment)
+                            else:
+                                self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, str([hex_value]))
+                                tup_result = (position[0], position[1], hex_value, None, str_segment)
+                            
+                        
+                    else:  # windows-1252
+                        if hex_value in self.dic_w1252:
+
+                            str_replacement = self.dic_w1252[hex_value]
+                            self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, str_replacement)
+                            tup_result = (position[0], position[1], hex_value, str_replacement, str_segment)
+                        else:
+                            self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, str([hex_value])) 
+                            tup_result = (position[0], position[1], hex_value, None, str_segment)
 
                     # if hex_value in dic_encoding:
                     #     self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, dic_encoding[hex_value])
@@ -112,9 +141,9 @@ class SPCH(object):
                     
                     # to be safe, the above character replacing code was commented out
                     # if using the character replacing code again, comment the following line out
-                    self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, str([hex_value])) # make hex value unchanged in oracle
+                    # self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].replace(hex_value, str([hex_value])) # make hex value unchanged in oracle
                     #self.lst_lst_field[position[0]][position[1]] = self.lst_lst_field[position[0]][position[1]].decode('utf-8')
-                    tup_result = (position[0], position[1], hex_value, None, str_segment)
+                    # tup_result = (position[0], position[1], hex_value, None, str_segment)
 
 
                     lst_replace_result.append(tup_result)

@@ -14,7 +14,19 @@ def main(str_path_name, str_delimiter = ','):
 
     return lst_lst_field
 
+
+def outer(insider):
+    insider
+    print 'out'
+
+def insider():
+    print 'in'
+
 if __name__ == '__main__':
+
+    outer(insider())
+
+
 
     #print sys.argv[1]
     '''
@@ -33,8 +45,8 @@ if __name__ == '__main__':
     # file.close()
 
 
-    file = codecs.open('HMIR2014MAR16_part.txt', encoding = 'utf-8', mode = 'rb')
-    for line in file:
-        line
+    # file = codecs.open('HMIR2014MAR16_part.txt', encoding = 'utf-8', mode = 'rb')
+    # for line in file:
+    #     line
             
-    file.close()
+    # file.close()

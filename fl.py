@@ -99,6 +99,7 @@ class File(object):
         for content in lst_string:
             content = content.strip()
             content = re.sub('[^A-z0-9_]', '_', content)
+            
             while content.find('__') > -1:
                 content = content.replace('__', '_')    
         
@@ -115,12 +116,7 @@ class File(object):
             table_name = str_prefix + '_' + str_absolute_file_name[len(str_directory)+1:int_dot_position]
         else:
             table_name = str_absolute_file_name[len(str_directory)+1:int_dot_position]
-        # while table_name.find('  ') > -1:
-        #     table_name = table_name.replace('  ', ' ')
-        # if table_name.find(' ') > -1:
-        #     table_name = table_name.replace(' ', '_')
-        # if table_name.find('-') > -1:
-        #     table_name = table_name.replace('-', '_')
+        
         table_name = re.sub('[^A-z0-9_]', '_', table_name)
         while table_name.find('__') > -1:
             table_name = table_name.replace('__', '_')    
@@ -142,6 +138,7 @@ class CSV_file(File):
         '''    
         '\0' is null bytes in the input file    
         '''
+        csv.field_size_limit(500*1024*1024)
         lst_lst_field = []
         try:
             if self.str_delimiter == ',':
@@ -214,31 +211,36 @@ class CSV_list(File):
 #         return lst_lst_parsed_file
 
 if __name__ == '__main__':
+    
+    file = File('try')
+    lst = ['[_\\xef\\xbb\\xbf_]']
+    print file.add_underscore(lst)
+
     #f = Big_CSV(r'Z:\Eris\Documentation\ERISDirect\TestSearches_EDR\OSHA\2016_Sep23\OSHA_Violations\osha_violation.csv')
-    file_name = r'Z:\Eris\Documentation\ERISDirect\TestSearches_EDR\OSHA\2016_Sep23\OSHA_Violations\osha_violation.csv'
-    f = open(file_name, 'rb')
-    lst_line = []
-    count = 0
-    for line in f:
-        if count < 200000:
-            lst_line.append(line)
-            if count%10000 == 0: print count
-            count += 1
-        else:
-            break
-    f.close()
-    reader = csv.reader(lst_line)
-    parsed_csv = []  
-    for row in reader:
-        parsed_csv.append(row)
+    # file_name = r'Z:\Eris\Documentation\ERISDirect\TestSearches_EDR\OSHA\2016_Sep23\OSHA_Violations\osha_violation.csv'
+    # f = open(file_name, 'rb')
+    # lst_line = []
+    # count = 0
+    # for line in f:
+    #     if count < 200000:
+    #         lst_line.append(line)
+    #         if count%10000 == 0: print count
+    #         count += 1
+    #     else:
+    #         break
+    # f.close()
+    # reader = csv.reader(lst_line)
+    # parsed_csv = []  
+    # for row in reader:
+    #     parsed_csv.append(row)
 
     
-    for i in range(len(parsed_csv)):
-        if i%10000 ==0:
-            print i
-            print parsed_csv[i]
+    # for i in range(len(parsed_csv)):
+    #     if i%10000 ==0:
+    #         print i
+    #         print parsed_csv[i]
 
-    print 'over'
+    # print 'over'
 
 
 

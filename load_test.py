@@ -35,23 +35,38 @@ def normal_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter,
         lst_field_type = ins_fl.get_data_type(lst_column_max_length)
         
         
-        
+        # It is possible that a source file doesn't have header which could be used as column name
+        # Otherwise, the line before the data starting line is regarded as a header for column name 
         if int_record_starting-1 < 0:
             
             for i in range(len(lst_column_max_length)):
                 
                 lst_column_name.append("Field"+str(i))
         else:    
-            lst_column_name = ins_fl.add_underscore(lst_lst_parsed_file[int_record_starting-1])        
+            lst_column_name = ins_fl.add_underscore(lst_lst_parsed_file[int_record_starting-1])
+            if len(lst_column_name) == len(lst_column_max_length):
+                pass
+            
+            # some csv file puts an extra comma at the end of the last field
+            # csv reader would think there is another field
+            # but due to no column match with it, the loading would fail
+            elif len(lst_column_name) < len(lst_column_max_length):
+                for i in range(len(lst_column_max_length)-len(lst_column_name)):
+                    lst_column_name.append('field'+str(i))
+            # if source has more columns than fields in the data, this could mean the parsing
+            # is not correct
+            else:
+                raise Exception('column number does not match field number!')        
         
 
         table_name = ins_fl.get_table_name(file_name, str_absolute_path, str_prefix)
         str_log = str_log + 'table name: ' + table_name + '\n'
         
         # drop table, then create table, and insert rows
+        # to be safe, drop table should be disabled once put the code into practical use
         ins_db.drop_table(table_name)
         ins_db.create_table(table_name, lst_column_name, lst_field_type)
-        int_rows_inserted = ins_db.insert_rows(table_name, lst_lst_parsed_file, int_record_starting)
+        int_rows_inserted = ins_db.insert_rows(table_name, lst_lst_parsed_file, int_record_starting, len(lst_column_name))
         
         str_log = str_log + 'rows inserted: ' + str(int_rows_inserted) + '\n'
         log_name = file_name[:file_name.find('.')] + '_loaded.txt'
@@ -70,6 +85,19 @@ def normal_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter,
         str_log = str_log + lst_column_name[tup[1]] + '\t' + str(tup) + '\n'
     fl.write_log(log_name, str_log)
 
+
+def get_list_fields_max_length(lst_line, str_delimiter):
+    ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
+    lst_lst_field = ins_csv_list.read()                            
+        
+    # Special treatment could use two characters to replace one
+    # The special character treatment was put here 
+    # is to get the length of field after treament
+    ins_spch = spch.SPCH(lst_lst_field)
+    ins_spch.replace_spch()
+    lst_lst_field = ins_spch.lst_lst_field
+    
+    return ins_csv_list.get_fields_max_length(lst_lst_field, 0)
 
 def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, int_record_starting, batch_size):
     spch_treated_result = ()
@@ -92,7 +120,7 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
     
 
     try:
-    # determine the length of fields
+        # detect the max length of fields first
 
         count = 0
         f = open(file_name, 'rb')
@@ -107,39 +135,44 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
             
             if count > 0 and count%batch_size == 0:
 
-                ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
-                lst_lst_field = ins_csv_list.read()                            
-                lst_line = []
+                # ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
+                # lst_lst_field = ins_csv_list.read()                            
+                # lst_line = []
                 
                 # Special treatment could use two characters to replace one
                 # The special character treatment was put here 
                 # is to get the length of field after treament
-                ins_spch = spch.SPCH(lst_lst_field)
-                ins_spch.replace_spch()
-                lst_lst_field = ins_spch.lst_lst_field
-
-                lst_fields_length.append(ins_csv_list.get_fields_max_length(lst_lst_field, 0))
+                # ins_spch = spch.SPCH(lst_lst_field)
+                # ins_spch.replace_spch()
+                lst_max_length = get_list_fields_max_length(lst_line, str_delimiter)
+                
+                lst_fields_length.append(lst_max_length)
+                lst_line = []
+                print 'reading ' + str(count)
             count += 1
         if len(lst_line) > 0: # the last batch could be empty
-            ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
-            lst_lst_field = ins_csv_list.read()
+            # ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
+            # lst_lst_field = ins_csv_list.read()
 
             #special character treatment
-            ins_spch = spch.SPCH(lst_lst_field)
-            ins_spch.replace_spch()
-            lst_lst_field = ins_spch.lst_lst_field
+            # ins_spch = spch.SPCH(lst_lst_field)
+            # ins_spch.replace_spch()
+            # lst_lst_field = ins_spch.lst_lst_field
 
-            lst_fields_length.append(ins_csv_list.get_fields_max_length(lst_lst_field, 0))
+            # lst_fields_length.append(ins_csv_list.get_fields_max_length(lst_lst_field, 0))
+            lst_max_length = get_list_fields_max_length(lst_line, str_delimiter)
 
+            lst_fields_length.append(lst_max_length)
+            lst_line = []
         lst_column_max_length = get_max_list(lst_fields_length)
         
 
         # read column name
-        if int_record_starting-1 < 0:
+        if int_record_starting-1 < 0: # source file does not have column name
             
             for i in range(len(lst_column_max_length)):
                 
-                lst_column_name.append("Field"+str(i))
+                lst_column_name.append("Field"+str(i)) # make a list of column name 
         else:    
             ins_csv_list = fl.CSV_list(lst_line_for_parsing_column_name, str_delimiter)
             lst_containing_column_name = ins_csv_list.read()
@@ -151,16 +184,23 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
         table_name = ins_csv_list.get_table_name(file_name, str_absolute_path, str_prefix)
         
         if len(lst_column_name) == len(lst_column_max_length):
-            lst_field_type = ins_csv_list.get_data_type(lst_column_max_length)
-            lst_column_name = ins_csv_list.add_underscore(lst_column_name)
-            
-            str_log = str_log + 'table name: ' + table_name + '\n'
-
-            # drop table, then create table, and insert rows
-            ins_db.drop_table(table_name)
-            ins_db.create_table(table_name, lst_column_name, lst_field_type)
+            pass
+        elif len(lst_column_name) < len(lst_column_max_length):
+            for i in range(len(lst_column_max_length)-len(lst_column_name)):
+                lst_column_name.append('field'+str(i))
         else:
             raise Exception('column number does not match field number!')
+
+        
+        lst_field_type = ins_csv_list.get_data_type(lst_column_max_length)
+        lst_column_name = ins_csv_list.add_underscore(lst_column_name)
+        
+        str_log = str_log + 'table name: ' + table_name + '\n'
+
+        # drop table, then create table, and insert rows
+        ins_db.drop_table(table_name)
+        ins_db.create_table(table_name, lst_column_name, lst_field_type)
+        
         
         # insert rows
         count = 0
@@ -192,7 +232,7 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
                 
                 str_sp_treatment += str(count) + '\n'
 
-                int_rows_inserted += ins_db.insert_rows(table_name, lst_lst_field, 0)
+                int_rows_inserted += ins_db.insert_rows(table_name, lst_lst_field, 0, len(lst_column_name))
                 
             count += 1
         f.close()
@@ -213,7 +253,7 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
             for tup in spch_treated_result[1]:
                 str_sp_treatment += lst_column_name[tup[1]] + '\t' + str(tup) + '\n'
 
-            int_rows_inserted += ins_db.insert_rows(table_name, lst_lst_field, 0)
+            int_rows_inserted += ins_db.insert_rows(table_name, lst_lst_field, 0, len(lst_column_name))
         
 
         str_log = str_log + 'rows inserted: ' + str(int_rows_inserted) + '\n'
@@ -233,7 +273,7 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
 def is_toload(file_name, lst_file):
     bln = True
 
-    if file_name[file_name.find('.')+1:] not in ('txt','csv'):
+    if file_name[file_name.find('.')+1:].lower() not in ('txt','csv'):
         bln = False
     elif file_name[file_name.find('.')-6:file_name.find('.')] in ('loaded', 'failed'):
         bln = False
@@ -279,9 +319,9 @@ def main(str_absolute_path, str_prefix = '', str_delimiter = ',', int_record_sta
             try:
                 file_info = os.stat(file_name)
                 file_size = file_info.st_size
-                # 100*1024*1024  100MB
-                size_limit = 100*1024
-                int_round_batch = 10
+                # 50*1024*1024  50MB
+                size_limit = 50*1024*1024
+                int_round_batch = 10*1000  # minimum loading unit is 10000 
                 if file_size < size_limit:
                     # size < 100 MB
                     normal_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, int_record_starting) 
@@ -298,7 +338,8 @@ def main(str_absolute_path, str_prefix = '', str_delimiter = ',', int_record_sta
                     
                     batch_size = total_line/loading_times
                     batch_size = batch_size/int_round_batch*int_round_batch
-                    
+                    print 'total line ' + str(total_line)
+                    print 'batch size ' + str(batch_size)
                     giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, int_record_starting, batch_size)
                    
                     
