@@ -169,6 +169,12 @@ class Test_database(Database):
         self.cnx = cx_Oracle.connect('eris/eris@gmtest')
         self.cursor = self.cnx.cursor()
         
+class CA_database(Database):
+    
+    def __init__(self):        
+        self.cnx = cx_Oracle.connect('eris_ca_load/eris@GMPROD')
+        self.cursor = self.cnx.cursor()        
+        
 if __name__ == '__main__':
     db = Test_database()
     #db.drop_table('JEFF1_FORMERLY_USED_DEFENSE_S')

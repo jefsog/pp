@@ -7,6 +7,9 @@ import spch
 
 
 
+
+
+
 def normal_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, int_record_starting):
     spch_treated_result = ()
     str_log = ''
@@ -79,12 +82,30 @@ def normal_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter,
     str_seconds =  'Seconds taken: ' + str(end_time - start_time)
     print str_seconds
     str_log = str_log + str_seconds + '\n'
+
+
+    
+    # move log file info into oracle table
+    lst_spch_columns = []
+    for tup in spch_treated_result[1]:        
+        if not tup[3]:            
+            lst_spch_columns.append([lst_column_name[tup[1]],str([tup[2],]), str([tup[4],])[2:-2]])       
+    if lst_spch_columns:
+        sp_table_name = table_name[0:26] + '_spc'
+        str_log += 'SPCH table name: ' + sp_table_name + '\n' + '\n'
+        lst_column_max_length = ins_fl.get_fields_max_length(lst_spch_columns, 0) 
+        lst_field_type = ins_fl.get_data_type(lst_column_max_length)    
+        
+        ins_db.drop_table(sp_table_name)    
+        ins_db.create_table(sp_table_name, ['sp_fields','sp_char', 'context'], lst_field_type)
+        ins_db.insert_rows(sp_table_name, lst_spch_columns, 0, 1)    
+    
     str_log = str_log + str(spch_treated_result[0]) + '\n'
     str_log += 'Sherman detector: ' + str(tup_shm_detector) + "\n"
     for tup in spch_treated_result[1]:
         str_log = str_log + lst_column_name[tup[1]] + '\t' + str(tup) + '\n'
+    
     fl.write_log(log_name, str_log)
-
 
 def get_list_fields_max_length(lst_line, str_delimiter):
     ins_csv_list = fl.CSV_list(lst_line, str_delimiter)
@@ -207,6 +228,7 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
         int_rows_inserted = 0
         lst_line = []
         lst_lst_field = []
+        lst_spchar_treatment = []
         f = open(file_name, 'rb')                
         for line in f:
             if count >= int_record_starting:
@@ -226,6 +248,10 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
 
                 str_sp_treatment += str(spch_treated_result[0]) + '\n'
                 str_sp_treatment += 'Sherman detector: ' + str(tup_shm_detector) + "\n"
+                
+                
+                lst_spchar_treatment.extend(spch_treated_result[1])
+                
                 for tup in spch_treated_result[1]:
                     
                     str_sp_treatment += lst_column_name[tup[1]] + '\t' + str(tup) + '\n'
@@ -250,6 +276,9 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
             
             str_sp_treatment += str(spch_treated_result[0]) + '\n'
             str_sp_treatment += 'Sherman detector: ' + str(tup_shm_detector) + "\n"
+            
+            lst_spchar_treatment.extend(spch_treated_result[1])
+            
             for tup in spch_treated_result[1]:
                 str_sp_treatment += lst_column_name[tup[1]] + '\t' + str(tup) + '\n'
 
@@ -267,9 +296,30 @@ def giant_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, 
     str_seconds =  'Seconds taken: ' + str(end_time - start_time)
     print str_seconds
     str_log = str_log + str_seconds + '\n'
+    
+
+    
+    
+    # move log file info into oracle table
+    lst_spch_columns = []
+    for tup in lst_spchar_treatment:        
+        if not tup[3]:            
+            lst_spch_columns.append([lst_column_name[tup[1]],str([tup[2],]), str([tup[4],])[2:-2]])       
+
+    if lst_spch_columns:
+        sp_table_name = table_name[0:26] + '_spc'
+        str_log += 'SPCH table name: ' + sp_table_name + '\n' + '\n'
+        lst_column_max_length = ins_csv_list.get_fields_max_length(lst_spch_columns, 0) 
+        lst_field_type = ins_csv_list.get_data_type(lst_column_max_length)    
+        
+        ins_db.drop_table(sp_table_name)    
+        ins_db.create_table(sp_table_name, ['sp_fields','sp_char', 'context'], lst_field_type)
+        ins_db.insert_rows(sp_table_name, lst_spch_columns, 0, 1)    
     str_log += str_sp_treatment 
     fl.write_log(log_name, str_log)
-
+    
+    
+    
 def is_toload(file_name, lst_file):
     bln = True
 
@@ -310,8 +360,9 @@ def main(str_absolute_path, str_prefix = '', str_delimiter = ',', int_record_sta
     
     
     # prepare database connection
-    #ins_db = db.US_database()
-    ins_db = db.Test_database()
+    ins_db = db.US_database()
+    #ins_db = db.Test_database()
+    #ins_db = db.CA_database()
     #int_record_starting = 1 # data, not the header, starting from the second line
     int_record_starting = int(int_record_starting)
     for file_name in lst_file:
@@ -323,11 +374,11 @@ def main(str_absolute_path, str_prefix = '', str_delimiter = ',', int_record_sta
                 size_limit = 50*1024*1024
                 int_round_batch = 10*1000  # minimum loading unit is 10000 
                 if file_size < size_limit:
-                    # size < 100 MB
+                    # size < 50 MB
                     normal_load(ins_db, str_absolute_path, file_name, str_prefix, str_delimiter, int_record_starting) 
                 else:
 
-                    # size >= 100 MB
+                    # size >= 50 MB
                     total_line = 0
                     file = open(file_name, 'rb')
                     for line in file:
